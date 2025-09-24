@@ -17,12 +17,12 @@ public class dgx3_compose_llm_jupyter_nb {
         String vmIpAddress = "172.20.23.156";
         String username = "appUser";
         String password = "Brain@123";
-        String containerId = "d17be9193654";
+        String containerName = "llm_jupyter_nb"; // Docker name
 
-        System.out.println("compose_llm_jupyter_nb Docker ID = " + containerId);
+        System.out.println("compose_llm_jupyter_nb Docker = " + containerName);
 
-        if (containerId.isEmpty()) {
-            System.out.println("Container ID is required.");
+        if (containerName.isEmpty()) {
+            System.out.println("Container name is required.");
             return;
         }
 
@@ -33,9 +33,9 @@ public class dgx3_compose_llm_jupyter_nb {
             session.setConfig("StrictHostKeyChecking", "no");
             session.connect();
 
-            // Execute the docker inspect command to check the container's status
+            // Execute the docker inspect command using the Docker name
             ChannelExec channel = (ChannelExec) session.openChannel("exec");
-            channel.setCommand("docker inspect --format='{{.State.Status}}' " + containerId);
+            channel.setCommand("docker inspect --format='{{.State.Status}}' " + containerName);
             channel.setInputStream(null);
             channel.setErrStream(System.err);
             BufferedReader reader = new BufferedReader(new InputStreamReader(channel.getInputStream()));
@@ -54,7 +54,6 @@ public class dgx3_compose_llm_jupyter_nb {
             channel.disconnect();
             session.disconnect();
 
-            // If container is not running, send alert
             if (!isRunning) {
                 sendEmailAlert("Hi,\n\n🚨 This is compose_llm_jupyter_nb Docker. I am currently down. Kindly restart the container at your earliest convenience.");
                 assert false : "Container is not in the expected state.";
@@ -102,7 +101,6 @@ public class dgx3_compose_llm_jupyter_nb {
             Message message = new MimeMessage(mailSession);
             message.setFrom(new InternetAddress(from, "Docker Monitor"));
 
-            // Convert arrays to comma-separated strings
             message.setRecipients(
                 Message.RecipientType.TO,
                 InternetAddress.parse(String.join(",", to))
